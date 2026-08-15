@@ -2,51 +2,51 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useParams } from "next/navigation";
-import { Plus, Receipt, Download } from "lucide-react";
-import ExpenseTable from "@/components/expenses/ExpenseTable";
-import ExpenseModal from "@/components/expenses/ExpenseModal";
+import { Plus, IndianRupee, Download } from "lucide-react";
+import PaymentTable from "@/components/payments/PaymentTable";
+import PaymentModal from "@/components/payments/PaymentModal";
 import ConfirmDeleteModal from "@/components/ui/ConfirmDeleteModal";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import EmptyState from "@/components/ui/EmptyState";
 import FAB from "@/components/ui/FAB";
-import { IExpense } from "@/types/expense";
+import { IPayment } from "@/types/payment";
 import { formatDate } from "@/lib/calculations";
 import { downloadCSV } from "@/lib/csv";
 import toast from "react-hot-toast";
 
-export default function ExpensesPage() {
+export default function PaymentsPage() {
   const params = useParams();
   const projectId = params?.id as string;
 
-  const [expenses, setExpenses] = useState<IExpense[]>([]);
+  const [payments, setPayments] = useState<IPayment[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
-  const [editingExpense, setEditingExpense] = useState<IExpense | null>(null);
-  const [deleteTarget, setDeleteTarget] = useState<IExpense | null>(null);
+  const [editingPayment, setEditingPayment] = useState<IPayment | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<IPayment | null>(null);
   const [deleting, setDeleting] = useState(false);
 
-  const fetchExpenses = useCallback(async () => {
+  const fetchPayments = useCallback(async () => {
     setLoading(true);
-    const res = await fetch(`/api/projects/${projectId}/expenses`);
+    const res = await fetch(`/api/projects/${projectId}/payments`);
     const json = await res.json();
-    if (json.success) setExpenses(json.data);
+    if (json.success) setPayments(json.data);
     setLoading(false);
   }, [projectId]);
 
   useEffect(() => {
-    if (projectId) fetchExpenses();
-  }, [projectId, fetchExpenses]);
+    if (projectId) fetchPayments();
+  }, [projectId, fetchPayments]);
 
   const handleDelete = async () => {
     if (!deleteTarget) return;
     setDeleting(true);
     try {
-      const res = await fetch(`/api/expenses/${deleteTarget._id}`, { method: "DELETE" });
+      const res = await fetch(`/api/payments/${deleteTarget._id}`, { method: "DELETE" });
       const json = await res.json();
       if (json.success) {
-        toast.success("Expense deleted");
+        toast.success("Payment removed");
         setDeleteTarget(null);
-        fetchExpenses();
+        fetchPayments();
       } else {
         toast.error(json.error || "Failed to delete");
       }
@@ -57,14 +57,13 @@ export default function ExpensesPage() {
 
   const handleExport = () => {
     downloadCSV(
-      `expenses-${projectId}.csv`,
-      expenses.map((e) => ({
-        Date: formatDate(e.date),
-        Category: e.category,
-        Description: e.description,
-        Amount: e.amount,
-        "Payment Method": e.paymentMethod,
-        Notes: e.notes || "",
+      `payments-${projectId}.csv`,
+      payments.map((p) => ({
+        Date: formatDate(p.date),
+        Amount: p.amount,
+        Method: p.method,
+        Reference: p.reference || "",
+        Notes: p.notes || "",
       }))
     );
   };
@@ -73,11 +72,11 @@ export default function ExpensesPage() {
     <div>
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-xl font-semibold text-gray-900">Expenses</h2>
-          <p className="text-sm text-gray-500">Daily project expenses across all categories.</p>
+          <h2 className="text-xl font-semibold text-gray-900">Payments Received</h2>
+          <p className="text-sm text-gray-500">Money collected from the client against this project&apos;s budget.</p>
         </div>
         <div className="flex gap-2">
-          {expenses.length > 0 && (
+          {payments.length > 0 && (
             <button className="btn-secondary" onClick={handleExport}>
               <Download className="h-4 w-4" /> Export CSV
             </button>
@@ -85,62 +84,62 @@ export default function ExpensesPage() {
           <button
             className="btn-primary hidden sm:inline-flex"
             onClick={() => {
-              setEditingExpense(null);
+              setEditingPayment(null);
               setShowModal(true);
             }}
           >
-            <Plus className="h-4 w-4" /> Add Expense
+            <Plus className="h-4 w-4" /> Record Payment
           </button>
         </div>
       </div>
 
       <div className="mt-6">
         {loading ? (
-          <LoadingSpinner label="Loading expenses..." />
-        ) : expenses.length === 0 ? (
+          <LoadingSpinner label="Loading payments..." />
+        ) : payments.length === 0 ? (
           <EmptyState
-            icon={Receipt}
-            title="No expenses recorded"
-            description="Add your first expense to start tracking project spending."
+            icon={IndianRupee}
+            title="No payments recorded"
+            description="Record client payments as they come in to track real cash position against your spending."
             action={
               <button className="btn-primary" onClick={() => setShowModal(true)}>
-                <Plus className="h-4 w-4" /> Add Expense
+                <Plus className="h-4 w-4" /> Record Payment
               </button>
             }
           />
         ) : (
-          <ExpenseTable
-            expenses={expenses}
-            onEdit={(expense) => {
-              setEditingExpense(expense);
+          <PaymentTable
+            payments={payments}
+            onEdit={(payment) => {
+              setEditingPayment(payment);
               setShowModal(true);
             }}
-            onDelete={(expense) => setDeleteTarget(expense)}
+            onDelete={(payment) => setDeleteTarget(payment)}
           />
         )}
       </div>
 
       {showModal && (
-        <ExpenseModal
+        <PaymentModal
           projectId={projectId}
-          editingExpense={editingExpense}
+          editingPayment={editingPayment}
           onClose={() => setShowModal(false)}
-          onSaved={fetchExpenses}
+          onSaved={fetchPayments}
         />
       )}
 
       <ConfirmDeleteModal
         open={!!deleteTarget}
-        message={`Delete the expense "${deleteTarget?.description}"? This action cannot be undone.`}
+        message={`Delete this payment of ${deleteTarget ? formatDate(deleteTarget.date) : ""}? This action cannot be undone.`}
         loading={deleting}
         onCancel={() => setDeleteTarget(null)}
         onConfirm={handleDelete}
       />
 
       <FAB
-        label="Add Expense"
+        label="Record Payment"
         onClick={() => {
-          setEditingExpense(null);
+          setEditingPayment(null);
           setShowModal(true);
         }}
       />

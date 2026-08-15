@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { ProjectWithSummary } from "@/types/project";
 import { formatCurrency, formatPercentage } from "@/lib/calculations";
+import BudgetHealthBadge from "@/components/ui/BudgetHealthBadge";
 import clsx from "clsx";
 
 const statusColors: Record<string, string> = {
@@ -20,8 +21,11 @@ export default function ProjectTable({ projects }: { projects: ProjectWithSummar
             <th className="px-4 py-3 text-left font-medium text-gray-500">Project Name</th>
             <th className="px-4 py-3 text-right font-medium text-gray-500">Budget</th>
             <th className="px-4 py-3 text-right font-medium text-gray-500">Total Spent</th>
+            <th className="px-4 py-3 text-right font-medium text-gray-500">Received</th>
+            <th className="px-4 py-3 text-right font-medium text-gray-500">Outstanding</th>
             <th className="px-4 py-3 text-right font-medium text-gray-500">Profit</th>
             <th className="px-4 py-3 text-right font-medium text-gray-500">Profit %</th>
+            <th className="px-4 py-3 text-left font-medium text-gray-500">Budget Health</th>
             <th className="px-4 py-3 text-left font-medium text-gray-500">Status</th>
           </tr>
         </thead>
@@ -35,6 +39,10 @@ export default function ProjectTable({ projects }: { projects: ProjectWithSummar
               </td>
               <td className="px-4 py-3 text-right text-gray-700">{formatCurrency(project.budget)}</td>
               <td className="px-4 py-3 text-right text-gray-700">{formatCurrency(project.summary.totalSpent)}</td>
+              <td className="px-4 py-3 text-right text-gray-700">{formatCurrency(project.summary.totalReceived)}</td>
+              <td className="px-4 py-3 text-right text-gray-700">
+                {formatCurrency(Math.max(project.summary.outstandingBalance, 0))}
+              </td>
               <td
                 className={clsx(
                   "px-4 py-3 text-right font-medium",
@@ -45,6 +53,9 @@ export default function ProjectTable({ projects }: { projects: ProjectWithSummar
               </td>
               <td className="px-4 py-3 text-right text-gray-700">
                 {formatPercentage(project.summary.profitPercentage)}
+              </td>
+              <td className="px-4 py-3">
+                <BudgetHealthBadge health={project.summary.budgetHealth} />
               </td>
               <td className="px-4 py-3">
                 <span className={clsx("rounded-full px-2.5 py-1 text-xs font-medium", statusColors[project.status])}>

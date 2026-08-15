@@ -17,7 +17,14 @@ import {
 } from "recharts";
 import { formatCurrency } from "@/lib/calculations";
 
-const COLORS = ["#2563eb", "#f97316", "#16a34a", "#dc2626", "#9333ea", "#0891b2", "#ca8a04", "#64748b"];
+// Validated categorical palette (fixed order — see dataviz skill palette.md).
+// Ordering is the CVD-safety mechanism, not cosmetic: keep this order.
+const COLORS = ["#2a78d6", "#eb6834", "#1baf7a", "#eda100", "#e87ba4", "#008300", "#4a3aa7", "#e34948"];
+
+// Status colors (fixed, never themed) — used where a mark represents a
+// good/bad state rather than a category.
+const STATUS_GOOD = "#0ca30c";
+const STATUS_CRITICAL = "#d03b3b";
 
 interface NamedValue {
   name: string;
@@ -35,17 +42,29 @@ interface DailyPoint {
   salary: number;
   total: number;
 }
-console.log("Test");
-// 1. Expense vs Salary — bar chart
+
+
+interface CashFlowPoint {
+  date: string;
+  spent: number;
+  received: number;
+}
+
 export function ExpenseVsSalaryChart({ data }: { data: NamedValue[] }) {
   return (
     <ResponsiveContainer width="100%" height={260}>
       <BarChart data={data}>
-        <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-        <XAxis dataKey="name" tick={{ fontSize: 12 }} />
-        <YAxis tick={{ fontSize: 12 }} tickFormatter={(v) => formatCurrency(v)} width={90} />
+        <CartesianGrid strokeDasharray="3 3" stroke="#e1e0d9" vertical={false} />
+        <XAxis dataKey="name" tick={{ fontSize: 12, fill: "#898781" }} axisLine={{ stroke: "#c3c2b7" }} tickLine={false} />
+        <YAxis
+          tick={{ fontSize: 12, fill: "#898781" }}
+          tickFormatter={(v) => formatCurrency(v)}
+          width={90}
+          axisLine={false}
+          tickLine={false}
+        />
         <Tooltip formatter={(v: number) => formatCurrency(v)} />
-        <Bar dataKey="value" fill="#2563eb" radius={[6, 6, 0, 0]} />
+        <Bar dataKey="value" fill={COLORS[0]} radius={[6, 6, 0, 0]} />
       </BarChart>
     </ResponsiveContainer>
   );
@@ -56,12 +75,18 @@ export function DailySpendingChart({ data }: { data: DailyPoint[] }) {
   return (
     <ResponsiveContainer width="100%" height={260}>
       <LineChart data={data}>
-        <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-        <XAxis dataKey="date" tick={{ fontSize: 11 }} />
-        <YAxis tick={{ fontSize: 12 }} tickFormatter={(v) => formatCurrency(v)} width={90} />
+        <CartesianGrid strokeDasharray="3 3" stroke="#e1e0d9" vertical={false} />
+        <XAxis dataKey="date" tick={{ fontSize: 11, fill: "#898781" }} axisLine={{ stroke: "#c3c2b7" }} tickLine={false} />
+        <YAxis
+          tick={{ fontSize: 12, fill: "#898781" }}
+          tickFormatter={(v) => formatCurrency(v)}
+          width={90}
+          axisLine={false}
+          tickLine={false}
+        />
         <Tooltip formatter={(v: number) => formatCurrency(v)} />
         <Legend />
-        <Line type="monotone" dataKey="total" name="Total Spent" stroke="#2563eb" strokeWidth={2} dot={false} />
+        <Line type="monotone" dataKey="total" name="Total Spent" stroke={COLORS[0]} strokeWidth={2} dot={false} />
       </LineChart>
     </ResponsiveContainer>
   );
@@ -95,9 +120,10 @@ export function ExpenseCategoryChart({ data }: { data: CategoryValue[] }) {
   );
 }
 
-// 4. Budget Usage — pie chart (used vs remaining)
+// 4. Budget Usage — pie chart (used vs remaining). Used/remaining is a
+// good/bad state, not a category, so it takes the fixed status colors.
 export function BudgetUsageChart({ data }: { data: NamedValue[] }) {
-  const colors = ["#dc2626", "#16a34a"];
+  const colors = [STATUS_CRITICAL, STATUS_GOOD];
   return (
     <ResponsiveContainer width="100%" height={260}>
       <PieChart>
@@ -109,6 +135,34 @@ export function BudgetUsageChart({ data }: { data: NamedValue[] }) {
         <Tooltip formatter={(v: number) => formatCurrency(v)} />
         <Legend />
       </PieChart>
+    </ResponsiveContainer>
+  );
+}
+
+// 5. Cash Flow — cumulative received vs cumulative spent over time.
+// The gap between the two lines is real cash position (received - spent),
+// distinct from the budget-based `profit` figure shown in the summary cards.
+export function CashFlowChart({ data }: { data: CashFlowPoint[] }) {
+  if (!data.length) {
+    return <p className="py-10 text-center text-sm text-gray-400">No activity recorded yet</p>;
+  }
+  return (
+    <ResponsiveContainer width="100%" height={260}>
+      <LineChart data={data}>
+        <CartesianGrid strokeDasharray="3 3" stroke="#e1e0d9" vertical={false} />
+        <XAxis dataKey="date" tick={{ fontSize: 11, fill: "#898781" }} axisLine={{ stroke: "#c3c2b7" }} tickLine={false} />
+        <YAxis
+          tick={{ fontSize: 12, fill: "#898781" }}
+          tickFormatter={(v) => formatCurrency(v)}
+          width={90}
+          axisLine={false}
+          tickLine={false}
+        />
+        <Tooltip formatter={(v: number) => formatCurrency(v)} />
+        <Legend />
+        <Line type="monotone" dataKey="received" name="Received from Client" stroke={STATUS_GOOD} strokeWidth={2} dot={false} />
+        <Line type="monotone" dataKey="spent" name="Total Spent" stroke={STATUS_CRITICAL} strokeWidth={2} dot={false} />
+      </LineChart>
     </ResponsiveContainer>
   );
 }

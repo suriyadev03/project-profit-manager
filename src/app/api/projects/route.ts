@@ -3,6 +3,8 @@ import connectDB from "@/lib/mongodb";
 import Project, { ProjectDocument } from "@/models/Project";
 import Expense, { ExpenseDocument } from "@/models/Expense";
 import Attendance, { AttendanceDocument } from "@/models/Attendance";
+import Payment, { PaymentDocument } from "@/models/Payment";
+import SalaryPayment, { SalaryPaymentDocument } from "@/models/SalaryPayment";
 import { buildProjectSummary } from "@/lib/calculations";
 
 // GET /api/projects - list all projects, each with a computed financial summary
@@ -29,15 +31,19 @@ export async function GET(req: NextRequest) {
     // Compute financial summary for every project in parallel
     const projectsWithSummary = await Promise.all(
       projects.map(async (project) => {
-        const [expenses, attendance] = await Promise.all([
+        const [expenses, attendance, payments, salaryPayments] = await Promise.all([
           Expense.find({ projectId: project._id }).lean<ExpenseDocument[]>(),
           Attendance.find({ projectId: project._id }).lean<AttendanceDocument[]>(),
+          Payment.find({ projectId: project._id }).lean<PaymentDocument[]>(),
+          SalaryPayment.find({ projectId: project._id }).lean<SalaryPaymentDocument[]>(),
         ]);
 
         const summary = buildProjectSummary(
           project.budget,
           expenses.map((e) => e.amount),
-          attendance.map((a) => a.salary)
+          attendance.map((a) => a.salary),
+          payments.map((p) => p.amount),
+          salaryPayments.map((p) => p.amount)
         );
 
         return { ...project, summary };

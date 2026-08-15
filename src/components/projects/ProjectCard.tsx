@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { ProjectWithSummary } from "@/types/project";
 import { formatCurrency, formatPercentage, formatDate } from "@/lib/calculations";
+import BudgetHealthBadge from "@/components/ui/BudgetHealthBadge";
 import clsx from "clsx";
 import { Calendar } from "lucide-react";
 
@@ -28,10 +29,13 @@ export default function ProjectCard({ project }: { project: ProjectWithSummary }
         </span>
       </div>
 
-      <div className="mt-1 flex items-center gap-1.5 text-xs text-gray-400">
-        <Calendar className="h-3.5 w-3.5" />
-        {formatDate(project.startDate)}
-        {project.endDate ? ` – ${formatDate(project.endDate)}` : ""}
+      <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-gray-400">
+        <span className="flex items-center gap-1.5">
+          <Calendar className="h-3.5 w-3.5" />
+          {formatDate(project.startDate)}
+          {project.endDate ? ` – ${formatDate(project.endDate)}` : ""}
+        </span>
+        <BudgetHealthBadge health={summary.budgetHealth} />
       </div>
 
       <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
@@ -40,16 +44,16 @@ export default function ProjectCard({ project }: { project: ProjectWithSummary }
           <p className="font-medium text-gray-900">{formatCurrency(project.budget)}</p>
         </div>
         <div>
-          <p className="text-gray-500">Total Expenses</p>
-          <p className="font-medium text-gray-900">{formatCurrency(summary.totalExpenses)}</p>
-        </div>
-        <div>
-          <p className="text-gray-500">Employee Salary</p>
-          <p className="font-medium text-gray-900">{formatCurrency(summary.totalSalary)}</p>
-        </div>
-        <div>
           <p className="text-gray-500">Total Spent</p>
           <p className="font-medium text-gray-900">{formatCurrency(summary.totalSpent)}</p>
+        </div>
+        <div>
+          <p className="text-gray-500">Received</p>
+          <p className="font-medium text-gray-900">{formatCurrency(summary.totalReceived)}</p>
+        </div>
+        <div>
+          <p className="text-gray-500">Outstanding</p>
+          <p className="font-medium text-gray-900">{formatCurrency(Math.max(summary.outstandingBalance, 0))}</p>
         </div>
       </div>
 

@@ -3,26 +3,24 @@
 import { useState } from "react";
 import toast from "react-hot-toast";
 import Modal from "@/components/ui/Modal";
-import { IExpense } from "@/types/expense";
+import { IPayment } from "@/types/payment";
 
-const CATEGORIES = ["Materials", "Transport", "Equipment", "Food", "Electricity", "Rent", "Tools", "Other"];
-const PAYMENT_METHODS = ["Cash", "Bank Transfer", "UPI", "Card", "Other"];
+const METHODS = ["Cash", "Bank Transfer", "UPI", "Cheque", "Card", "Other"];
 
-interface ExpenseModalProps {
+interface PaymentModalProps {
   projectId: string;
-  editingExpense?: IExpense | null;
+  editingPayment?: IPayment | null;
   onClose: () => void;
   onSaved: () => void;
 }
 
-export default function ExpenseModal({ projectId, editingExpense, onClose, onSaved }: ExpenseModalProps) {
+export default function PaymentModal({ projectId, editingPayment, onClose, onSaved }: PaymentModalProps) {
   const [form, setForm] = useState({
-    date: editingExpense?.date?.slice(0, 10) ?? new Date().toISOString().slice(0, 10),
-    category: editingExpense?.category ?? "Materials",
-    description: editingExpense?.description ?? "",
-    amount: editingExpense?.amount?.toString() ?? "",
-    paymentMethod: editingExpense?.paymentMethod ?? "Cash",
-    notes: editingExpense?.notes ?? "",
+    date: editingPayment?.date?.slice(0, 10) ?? new Date().toISOString().slice(0, 10),
+    amount: editingPayment?.amount?.toString() ?? "",
+    method: editingPayment?.method ?? "Bank Transfer",
+    reference: editingPayment?.reference ?? "",
+    notes: editingPayment?.notes ?? "",
   });
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
@@ -33,15 +31,14 @@ export default function ExpenseModal({ projectId, editingExpense, onClose, onSav
     e.preventDefault();
     setError("");
 
-    if (!form.description.trim()) return setError("Description is required");
     if (!form.amount || Number(form.amount) <= 0) return setError("Amount must be greater than 0");
 
     setSubmitting(true);
     try {
-      const url = editingExpense
-        ? `/api/expenses/${editingExpense._id}`
-        : `/api/projects/${projectId}/expenses`;
-      const method = editingExpense ? "PUT" : "POST";
+      const url = editingPayment
+        ? `/api/payments/${editingPayment._id}`
+        : `/api/projects/${projectId}/payments`;
+      const method = editingPayment ? "PUT" : "POST";
 
       const res = await fetch(url, {
         method,
@@ -55,7 +52,7 @@ export default function ExpenseModal({ projectId, editingExpense, onClose, onSav
         return;
       }
 
-      toast.success(editingExpense ? "Expense updated" : "Expense added");
+      toast.success(editingPayment ? "Payment updated" : "Payment recorded");
       onSaved();
       onClose();
     } catch {
@@ -66,13 +63,13 @@ export default function ExpenseModal({ projectId, editingExpense, onClose, onSav
   };
 
   return (
-    <Modal title={editingExpense ? "Edit Expense" : "Add Expense"} onClose={onClose}>
+    <Modal title={editingPayment ? "Edit Payment" : "Record Payment Received"} onClose={onClose}>
       <form onSubmit={handleSubmit} className="space-y-4">
         {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{error}</p>}
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
-            <label className="label-field">Expense Date</label>
+            <label className="label-field">Payment Date</label>
             <input
               type="date"
               className="input-field"
@@ -80,29 +77,6 @@ export default function ExpenseModal({ projectId, editingExpense, onClose, onSav
               onChange={(e) => handleChange("date", e.target.value)}
             />
           </div>
-          <div>
-            <label className="label-field">Category</label>
-            <select className="input-field" value={form.category} onChange={(e) => handleChange("category", e.target.value)}>
-              {CATEGORIES.map((c) => (
-                <option key={c} value={c}>
-                  {c}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        <div>
-          <label className="label-field">Description</label>
-          <input
-            className="input-field"
-            value={form.description}
-            onChange={(e) => handleChange("description", e.target.value)}
-            placeholder="e.g. Cement bags purchase"
-          />
-        </div>
-
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
             <label className="label-field">Amount (₹)</label>
             <input
@@ -112,21 +86,30 @@ export default function ExpenseModal({ projectId, editingExpense, onClose, onSav
               className="input-field"
               value={form.amount}
               onChange={(e) => handleChange("amount", e.target.value)}
+              placeholder="50000"
             />
           </div>
+        </div>
+
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
             <label className="label-field">Payment Method</label>
-            <select
-              className="input-field"
-              value={form.paymentMethod}
-              onChange={(e) => handleChange("paymentMethod", e.target.value)}
-            >
-              {PAYMENT_METHODS.map((p) => (
-                <option key={p} value={p}>
-                  {p}
+            <select className="input-field" value={form.method} onChange={(e) => handleChange("method", e.target.value)}>
+              {METHODS.map((m) => (
+                <option key={m} value={m}>
+                  {m}
                 </option>
               ))}
             </select>
+          </div>
+          <div>
+            <label className="label-field">Reference No. (optional)</label>
+            <input
+              className="input-field"
+              value={form.reference}
+              onChange={(e) => handleChange("reference", e.target.value)}
+              placeholder="Cheque / UTR / txn no."
+            />
           </div>
         </div>
 
@@ -145,7 +128,7 @@ export default function ExpenseModal({ projectId, editingExpense, onClose, onSav
             Cancel
           </button>
           <button type="submit" className="btn-primary" disabled={submitting}>
-            {submitting ? "Saving..." : editingExpense ? "Save Changes" : "Add Expense"}
+            {submitting ? "Saving..." : editingPayment ? "Save Changes" : "Record Payment"}
           </button>
         </div>
       </form>

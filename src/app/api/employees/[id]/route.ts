@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 import connectDB from "@/lib/mongodb";
 import Employee from "@/models/Employee";
 import Attendance from "@/models/Attendance";
+import SalaryPayment from "@/models/SalaryPayment";
 
 interface Params {
   params: Promise<{ id: string }>;
@@ -51,7 +52,7 @@ export async function PUT(req: NextRequest, { params }: Params) {
   }
 }
 
-// DELETE /api/employees/:id - also removes their attendance history
+// DELETE /api/employees/:id - also removes their attendance and salary payment history
 export async function DELETE(_req: NextRequest, { params }: Params) {
   try {
     await connectDB();
@@ -68,6 +69,7 @@ export async function DELETE(_req: NextRequest, { params }: Params) {
 
     await Promise.all([
       Attendance.deleteMany({ employeeId: id }),
+      SalaryPayment.deleteMany({ employeeId: id }),
       Employee.findByIdAndDelete(id),
     ]);
 

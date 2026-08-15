@@ -226,28 +226,47 @@ export default function AttendancePage() {
           ) : summaryRows.length === 0 ? (
             <EmptyState icon={CalendarDays} title="No spending in this range" />
           ) : (
-            <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white shadow-sm">
-              <table className="min-w-full divide-y divide-gray-200 text-sm">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-4 py-3 text-left font-medium text-gray-500">Date</th>
-                    <th className="px-4 py-3 text-right font-medium text-gray-500">Expenses</th>
-                    <th className="px-4 py-3 text-right font-medium text-gray-500">Salary</th>
-                    <th className="px-4 py-3 text-right font-medium text-gray-500">Total Spent</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
-                  {summaryRows.map((row) => (
-                    <tr key={row.date} className="hover:bg-gray-50">
-                      <td className="px-4 py-3 text-gray-700">{formatDate(row.date)}</td>
-                      <td className="px-4 py-3 text-right text-gray-700">{formatCurrency(row.expenses)}</td>
-                      <td className="px-4 py-3 text-right text-gray-700">{formatCurrency(row.salary)}</td>
-                      <td className="px-4 py-3 text-right font-medium text-gray-900">{formatCurrency(row.total)}</td>
+            <>
+              {/* Mobile: stacked cards */}
+              <div className="space-y-3 sm:hidden">
+                {summaryRows.map((row) => (
+                  <div key={row.date} className="card">
+                    <div className="flex items-center justify-between">
+                      <p className="font-medium text-gray-900">{formatDate(row.date)}</p>
+                      <p className="font-semibold text-gray-900">{formatCurrency(row.total)}</p>
+                    </div>
+                    <div className="mt-2 flex justify-between text-xs text-gray-500">
+                      <span>Expenses: {formatCurrency(row.expenses)}</span>
+                      <span>Salary: {formatCurrency(row.salary)}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Desktop / tablet: full table */}
+              <div className="hidden overflow-x-auto rounded-xl border border-gray-200 bg-white shadow-sm sm:block">
+                <table className="min-w-full divide-y divide-gray-200 text-sm">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-4 py-3 text-left font-medium text-gray-500">Date</th>
+                      <th className="px-4 py-3 text-right font-medium text-gray-500">Expenses</th>
+                      <th className="px-4 py-3 text-right font-medium text-gray-500">Salary</th>
+                      <th className="px-4 py-3 text-right font-medium text-gray-500">Total Spent</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {summaryRows.map((row) => (
+                      <tr key={row.date} className="hover:bg-gray-50">
+                        <td className="px-4 py-3 text-gray-700">{formatDate(row.date)}</td>
+                        <td className="px-4 py-3 text-right text-gray-700">{formatCurrency(row.expenses)}</td>
+                        <td className="px-4 py-3 text-right text-gray-700">{formatCurrency(row.salary)}</td>
+                        <td className="px-4 py-3 text-right font-medium text-gray-900">{formatCurrency(row.total)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
           )}
         </div>
       </section>
